@@ -107,6 +107,9 @@
    #:node-progn                         ; STRUCT
    #:make-node-progn                    ; CONSTRUCTOR
    #:node-progn-body                    ; ACCESSOR
+   #:node-unsafe                        ; STRUCT
+   #:make-node-unsafe                   ; CONSTRUCTOR
+   #:node-unsafe-body                   ; ACCESSOR
    #:node-the                           ; STRUCT
    #:make-node-the                      ; CONSTRUCTOR
    #:node-the-type                      ; ACCESSOR
@@ -257,6 +260,7 @@ Rebound to NIL parsing an anonymous FN.")
 ;;;;             | node-lisp
 ;;;;             | node-match
 ;;;;             | node-progn
+;;;;             | node-unsafe
 ;;;;             | node-the
 ;;;;             | node-return
 ;;;;             | node-application
@@ -300,6 +304,8 @@ Rebound to NIL parsing an anonymous FN.")
 ;;;; node-match := "(" "match" pattern match-branch* ")"
 ;;;;
 ;;;; node-progn := "(" "progn" body ")"
+;;;;
+;;;; node-unsafe := "(" "unsafe" body ")"
 ;;;;
 ;;;; node-the := "(" "the" type expression ")"
 ;;;;
@@ -527,6 +533,11 @@ Rebound to NIL parsing an anonymous FN.")
   (branches (util:required 'branches) :type node-match-branch-list :read-only t))
 
 (defstruct (node-progn
+            (:include node)
+            (:copier nil))
+  (body (util:required 'body) :type node-body :read-only t))
+
+(defstruct (node-unsafe
             (:include node)
             (:copier nil))
   (body (util:required 'body) :type node-body :read-only t))
@@ -1288,6 +1299,12 @@ Rebound to NIL parsing an anonymous FN.")
     ((and (cst:atom (cst:first form))
           (eq 'coalton:progn (cst:raw (cst:first form))))
      (make-node-progn
+      :body (parse-body (cst:rest form) (cst:first form) source)
+      :location (form-location source form)))
+
+    ((and (cst:atom (cst:first form))
+          (eq 'coalton++:unsafe (cst:raw (cst:first form))))
+     (make-node-unsafe
       :body (parse-body (cst:rest form) (cst:first form) source)
       :location (form-location source form)))
 
